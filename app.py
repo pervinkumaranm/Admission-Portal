@@ -18,7 +18,9 @@ app.secret_key = 'admission-portal-secret-key-2026'
 # ---------- constants ----------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
-CREDENTIALS_FILE = os.path.join(BASE_DIR, 'credentials.json')
+# On Render, secret files are stored at /etc/secrets/
+# Fall back to local path for development
+CREDENTIALS_FILE = '/etc/secrets/credentials.json' if os.path.exists('/etc/secrets/credentials.json') else os.path.join(BASE_DIR, 'credentials.json')
 SHEET_NAME = "SSEC_ADMISSION DATABASE_2026-27"  # User can change this name
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
