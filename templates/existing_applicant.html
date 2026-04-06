@@ -1,0 +1,291 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Existing Applicants – Admission Portal{% endblock %}
+
+{% block content %}
+<div class="px-5 py-6 md:p-8">
+  <!-- Top Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 mt-4 md:mt-0">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Existing Applicants</h1>
+      <p class="text-gray-500 font-medium text-sm">Manage and update all student records</p>
+    </div>
+    
+    <div class="relative w-full md:w-[360px]">
+      <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      <input type="text" id="tableSearch" placeholder="Search by Name, App ID, or Date" 
+             onkeyup="filterTable()"
+             class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm text-sm font-medium placeholder-gray-400">
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    {% if records %}
+    <table class="w-full text-left responsive-table" id="applicantsTable">
+      <thead>
+        <tr>
+          <th>App ID</th>
+          <th>Date</th>
+          <th>Name</th>
+          <th>DOB</th>
+          <th>Mode</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr id="row-{{ r.ApplicationNumber }}" class="applicant-row">
+          <td data-label="App ID" class="app-id">
+            <span class="font-bold text-gray-900">{{ r.ApplicationNumber }}</span>
+          </td>
+          <td data-label="Date" class="text-gray-600 text-sm date-col">{{ r.AdmissionDate }}</td>
+          <td data-label="Name" class="app-name font-semibold text-gray-800">{{ r.Name }}</td>
+          <td data-label="DOB" class="text-gray-600 text-sm hidden md:table-cell">{{ r.DOB }}</td>
+          <td data-label="Mode" class="text-gray-600 text-sm hidden lg:table-cell">
+             {% if r.AdmissionMode %}{{ r.AdmissionMode }}{% else %}<span class="text-gray-400 text-xs">-</span>{% endif %}
+          </td>
+          <td data-label="Phone" class="text-gray-600 text-sm">{{ r.Phone }}</td>
+          <td data-label="Status">
+            <div class="status-container inline-flex cursor-pointer active:scale-95 transition-transform" onclick="toggleStatus('{{ r.ApplicationNumber }}')" title="Click to toggle status">
+              {% if r.PaymentStatus == 'Paid' %}
+              <span id="status-{{ r.ApplicationNumber }}" class="status-badge paid">Paid</span>
+              {% else %}
+              <span id="status-{{ r.ApplicationNumber }}" class="status-badge unpaid">Unpaid</span>
+              {% endif %}
+            </div>
+          </td>
+          <td data-label="Actions" class="md:text-right">
+            <div class="flex items-center md:justify-end gap-2">
+              <a href="{{ url_for('edit_applicant', app_number=r.ApplicationNumber) }}" 
+                 class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors" title="Edit">
+                <i class="fas fa-edit"></i>
+              </a>
+              <button onclick="deleteRecord('{{ r.ApplicationNumber }}')" 
+                      class="w-9 h-9 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="bg-white rounded-3xl p-12 flex flex-col items-center justify-center text-center border border-gray-100 shadow-sm mt-8">
+      <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 text-4xl mb-4">
+        <i class="fas fa-users-slash"></i>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">No applicants found</h3>
+      <p class="text-gray-500 mb-6">There are currently no registered applicants in the system.</p>
+      <a href="{{ url_for('new_applicant') }}" class="btn-primary px-6 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark transition-colors shadow-floating block">
+        <i class="fas fa-plus mr-2"></i> Register New Applicant
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  /* Table Base Styles for Desktop */
+  table.responsive-table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-top: -8px;
+  }
+  table.responsive-table th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9CA3AF; /* gray-400 */
+    padding: 0 1.5rem 0.5rem;
+    border-bottom: 2px solid #F3F4F6; /* gray-100 */
+  }
+  table.responsive-table tbody tr {
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    border-radius: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  table.responsive-table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(108, 99, 255, 0.08); /* slight primary shadow */
+  }
+  table.responsive-table td {
+    padding: 1rem 1.5rem;
+  }
+  table.responsive-table td:first-child {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border: 1px solid #F3F4F6;
+    border-right: none;
+  }
+  table.responsive-table td {
+    border-top: 1px solid #F3F4F6;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  table.responsive-table td:last-child {
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border: 1px solid #F3F4F6;
+    border-left: none;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+  .status-badge.paid {
+    background-color: #ECFDF5; /* emerald-50 */
+    color: #10B981; /* emerald-500 */
+  }
+  .status-badge.unpaid {
+    background-color: #FFF7ED; /* orange-50 */
+    color: #F97316; /* orange-500 */
+  }
+
+  /* Mobile Responsive Table to Cards Transformation */
+  @media (max-width: 768px) {
+    table.responsive-table {
+      display: block;
+      margin-top: 0;
+    }
+    table.responsive-table thead {
+      display: none; /* Hide headers completely */
+    }
+    table.responsive-table tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    table.responsive-table tbody tr {
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      border: 1px solid #F3F4F6;
+      border-radius: 20px;
+    }
+    table.responsive-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0;
+      border: none !important;
+      border-bottom: 1px dashed #F3F4F6 !important;
+      border-radius: 0 !important;
+    }
+    table.responsive-table td:last-child {
+      border-bottom: none !important;
+      padding-bottom: 0;
+      margin-top: 0.5rem;
+      justify-content: flex-end; /* Align actions to right */
+    }
+    table.responsive-table td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: #9CA3AF;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    /* Special styling for Date, DOB and Mode to not look out of place if hidden */
+    table.responsive-table td[data-label="DOB"],
+    table.responsive-table td[data-label="Mode"] {
+      display: none !important; /* Hide DOB and Mode on mobile to save space */
+    }
+    table.responsive-table tr:hover {
+      transform: none; /* Remove hover effect on mobile */
+    }
+  }
+</style>
+
+<script>
+  function filterTable() {
+    const filter = document.getElementById('tableSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('.applicant-row');
+    
+    rows.forEach(row => {
+      const appId = row.querySelector('.app-id').textContent.toLowerCase();
+      const admissionDate = row.querySelector('.date-col').textContent.toLowerCase();
+      const name = row.querySelector('.app-name').textContent.toLowerCase();
+      
+      if (appId.includes(filter) || name.includes(filter) || admissionDate.includes(filter)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  async function deleteRecord(appNum) {
+      if(!confirm(`Are you sure you want to delete applicant ${appNum}? This cannot be undone.`)) {
+          return;
+      }
+      try {
+          const res = await fetch('/api/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ApplicationNumber: appNum})
+          });
+          const data = await res.json();
+          if(data.success) {
+              const row = document.getElementById('row-' + appNum);
+              // Fade out animation
+              if (row) {
+                  row.style.opacity = '0';
+                  setTimeout(() => row.remove(), 300);
+              }
+              window.showToast('Record deleted successfully');
+          } else {
+              window.showToast(data.message || 'Delete failed', true);
+          }
+      } catch(err) {
+          window.showToast('Delete request failed', true);
+      }
+  }
+
+  async function toggleStatus(appNum) {
+      const badge = document.getElementById('status-' + appNum);
+      if (!badge) return;
+      
+      const originalText = badge.textContent;
+      badge.textContent = '...';
+      badge.className = 'status-badge bg-gray-100 text-gray-500';
+      
+      try {
+          const res = await fetch('/api/toggle-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ApplicationNumber: appNum})
+          });
+          const data = await res.json();
+          if(data.success) {
+              const newStatus = data.new_status;
+              badge.textContent = newStatus;
+              badge.className = 'status-badge ' + newStatus.toLowerCase();
+              window.showToast(`Status updated to ${newStatus}`);
+          } else {
+              badge.textContent = originalText;
+              badge.className = 'status-badge ' + originalText.toLowerCase();
+              window.showToast(data.message || 'Update failed', true);
+          }
+      } catch(err) {
+          badge.textContent = originalText;
+          badge.className = 'status-badge ' + originalText.toLowerCase();
+          window.showToast('Toggle request failed', true);
+      }
+  }
+</script>
+{% endblock %}

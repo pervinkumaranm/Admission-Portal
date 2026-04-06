@@ -1,0 +1,141 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Dashboard – Admission Portal{% endblock %}
+
+{% block content %}
+<div class="px-5 py-6 md:p-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2 mt-4 md:mt-0">Welcome, Staff <span class="inline-block origin-bottom-right animate-[wave_2s_infinite]">👋</span></h1>
+    <p class="text-gray-500 font-medium">Here's an overview of the ongoing admissions</p>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+    <!-- Total Applicants -->
+    <div class="bg-white rounded-2xl p-6 shadow-soft border border-gray-100 flex items-start gap-4">
+      <div class="w-14 h-14 rounded-[18px] bg-primary/10 flex items-center justify-center text-primary text-2xl shrink-0">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-400 tracking-wide uppercase mb-1">Total</p>
+        <h3 class="text-3xl font-bold text-gray-900" id="statTotal">{{ total if total else '0' }}</h3>
+      </div>
+    </div>
+
+    <!-- Paid -->
+    <div class="bg-white rounded-2xl p-6 shadow-soft border border-gray-100 flex items-start gap-4">
+      <div class="w-14 h-14 rounded-[18px] bg-emerald-50 flex items-center justify-center text-emerald-500 text-2xl shrink-0">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-400 tracking-wide uppercase mb-1">Paid</p>
+        <h3 class="text-3xl font-bold text-gray-900" id="statPaid">{{ paid if paid else '0' }}</h3>
+      </div>
+    </div>
+
+    <!-- Unpaid -->
+    <div class="bg-white rounded-2xl p-6 shadow-soft border border-gray-100 flex items-start gap-4">
+      <div class="w-14 h-14 rounded-[18px] bg-orange-50 flex items-center justify-center text-orange-500 text-2xl shrink-0">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-400 tracking-wide uppercase mb-1">Unpaid</p>
+        <h3 class="text-3xl font-bold text-gray-900" id="statUnpaid">{{ unpaid if unpaid else '0' }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div>
+    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1">Quick Actions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- New Applicant -->
+      <a href="{{ url_for('new_applicant') }}" class="group bg-gradient-to-br from-[#6C63FF] to-[#7F7FD5] rounded-3xl p-6 relative overflow-hidden transition-transform duration-300 hover:scale-[1.02] shadow-floating">
+        <div class="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white text-xl mb-4">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">New Applicant</h3>
+          <p class="text-white/80 text-sm mb-6 max-w-[80%]">Register a completely new student admission securely.</p>
+          <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-lg text-sm font-semibold group-hover:bg-white group-hover:text-primary transition-colors">
+            Open Form <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </a>
+
+      <!-- Existing Applicant -->
+      <a href="{{ url_for('existing_applicant') }}" class="group bg-gradient-to-br from-[#6C63FF] to-[#7F7FD5] rounded-3xl p-6 relative overflow-hidden transition-transform duration-300 hover:scale-[1.02] shadow-floating">
+        <div class="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white text-xl mb-4">
+            <i class="fas fa-search"></i>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Existing Applicants</h3>
+          <p class="text-white/80 text-sm mb-6 max-w-[80%]">Search, edit, update, or delete existing applicant records.</p>
+          <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-lg text-sm font-semibold group-hover:bg-white group-hover:text-primary transition-colors">
+            Search Now <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  @keyframes wave {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(14deg); }  /* The following five values can be played with to make the waving more or less extreme */
+    20% { transform: rotate(-8deg); }
+    30% { transform: rotate(14deg); }
+    40% { transform: rotate(-4deg); }
+    50% { transform: rotate(10deg); }
+    60% { transform: rotate(0deg); }  /* Reset for the last half to pause */
+    100% { transform: rotate(0deg); }
+  }
+</style>
+<script>
+  // Smooth count-up animation for numbers
+  function animateValue(id, start, end, duration) {
+    if (start === end) return;
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    const range = end - start;
+    let current = start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    
+    if (stepTime < 1) {
+        obj.innerText = end;
+        return;
+    }
+
+    const timer = setInterval(() => {
+      current += increment;
+      obj.innerText = current;
+      if (current == end) {
+        clearInterval(timer);
+      }
+    }, stepTime);
+  }
+
+  // Fetch dashboard stats asynchronously
+  async function fetchStats() {
+    try {
+      const response = await fetch('/api/stats');
+      const data = await response.json();
+      if (data.success) {
+        animateValue('statTotal', 0, data.total, 1200);
+        animateValue('statPaid', 0, data.paid, 1000);
+        animateValue('statUnpaid', 0, data.unpaid, 1000);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', fetchStats);
+</script>
+{% endblock %}

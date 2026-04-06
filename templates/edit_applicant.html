@@ -1,0 +1,694 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Edit Applicant – Admission Portal{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 md:p-8 max-w-5xl mx-auto">
+  <!-- Top Bar -->
+  <div class="mb-8 mt-4 md:mt-0 text-center md:text-left">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Edit Applicant</h1>
+    <p class="text-gray-500 font-medium text-sm">Modify details for Application: <strong class="text-primary">{{ record.ApplicationNumber }}</strong></p>
+  </div>
+
+  <!-- Progress Stepper -->
+  <div class="relative max-w-3xl mx-auto md:mx-0 mb-10">
+    <!-- Connecting Line -->
+    <div class="absolute top-[22px] left-8 right-8 h-[3px] bg-gray-100 rounded-full z-0"></div>
+    <div class="absolute top-[22px] left-8 h-[3px] bg-primary rounded-full z-0 transition-all duration-500" id="progressLine" style="width: 0%;"></div>
+    
+    <div class="flex justify-between relative z-10">
+      <!-- Step 1 -->
+      <div class="flex flex-col items-center group cursor-pointer" onclick="goStep(1)" id="prog1">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white bg-primary shadow-[0_0_0_4px_white,0_4px_10px_rgba(108,99,255,0.4)] transition-all step-indicator">1</div>
+        <span class="text-[10px] md:text-xs font-bold mt-3 text-primary uppercase tracking-wider step-text">Student Details</span>
+      </div>
+      <!-- Step 2 -->
+      <div class="flex flex-col items-center group cursor-pointer" onclick="goStep(2)" id="prog2">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-400 bg-white border-2 border-gray-200 shadow-[0_0_0_4px_white] transition-all step-indicator">2</div>
+        <span class="text-[10px] md:text-xs font-bold mt-3 text-gray-400 uppercase tracking-wider step-text">Payment</span>
+      </div>
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center group cursor-pointer" onclick="goStep(3)" id="prog3">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-400 bg-white border-2 border-gray-200 shadow-[0_0_0_4px_white] transition-all step-indicator">3</div>
+        <span class="text-[10px] md:text-xs font-bold mt-3 text-gray-400 uppercase tracking-wider step-text">Cutoff Calc</span>
+      </div>
+      <!-- Step 4 -->
+      <div class="flex flex-col items-center group cursor-pointer" onclick="goStep(4)" id="prog4">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-400 bg-white border-2 border-gray-200 shadow-[0_0_0_4px_white] transition-all step-indicator">4</div>
+        <span class="text-[10px] md:text-xs font-bold mt-3 text-gray-400 uppercase tracking-wider step-text">Certificates</span>
+      </div>
+    </div>
+  </div>
+
+  <form id="applicantForm" class="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden relative">
+    <input type="hidden" name="ApplicationNumber" value="{{ record.ApplicationNumber }}">
+    
+    <!-- STEP 1: Student Details -->
+    <div class="step-section block" id="step1">
+      <div class="p-5 md:p-8">
+        <div class="mb-8 pb-4 border-b border-gray-50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-lg"><i class="fas fa-user-graduate"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Student Details</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Fields marked with <span class="text-red-500">*</span> are required.</p>
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-university"></i> Admission Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-1.5">
+            <label for="admission_date" class="text-sm font-semibold text-gray-700">Admission Date <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="date" id="admission_date" name="admission_date" required value="{{ record.AdmissionDate }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="hostel_dayscholar" class="text-sm font-semibold text-gray-700">Hostel / Dayscholar</label>
+            <div class="relative">
+              <i class="fas fa-hotel absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="hostel_dayscholar" name="hostel_dayscholar" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Option</option>
+                <option value="Hostel" {% if record.HostelDayscholar == 'Hostel' %}selected{% endif %}>Hostel</option>
+                <option value="Dayscholar" {% if record.HostelDayscholar == 'Dayscholar' %}selected{% endif %}>Dayscholar</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-id-card"></i> Basic Info</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-1.5">
+            <label for="name" class="text-sm font-semibold text-gray-700">Student Name <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="name" name="name" required value="{{ record.Name }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="degree" class="text-sm font-semibold text-gray-700">Degree <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-graduation-cap absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="degree" name="degree" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Degree</option>
+                <option value="UG" {% if record.Degree == 'UG' %}selected{% endif %}>UG</option>
+                <option value="PG" {% if record.Degree == 'PG' %}selected{% endif %}>PG</option>
+                <option value="Diploma" {% if record.Degree == 'Diploma' %}selected{% endif %}>Diploma</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="regulation" class="text-sm font-semibold text-gray-700">Regular / Lateral <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-sliders-h absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="regulation" name="regulation" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Option</option>
+                <option value="Regular" {% if record.Regulation == 'Regular' %}selected{% endif %}>Regular</option>
+                <option value="Lateral" {% if record.Regulation == 'Lateral' %}selected{% endif %}>Lateral</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="dob" class="text-sm font-semibold text-gray-700">Date of Birth <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-birthday-cake absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="date" id="dob" name="dob" required value="{{ record.DOB }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-list-ol"></i> Academic Preferences</h3>
+        {% set prefs = ["B.E Computer Science and Engineering", "B.E Civil Engineering", "B.E Cyber Security", "B.E Electronics and Communication Engineering", "B.E Electrical and Electronics Engineering", "B.E Mechanical Engineering", "B.E Mechatronics Engineering", "B.Tech Information Technology", "B.Tech Artificial Intelligence and Data Science", "B.E Artificial Intelligence and Machine Learning", "M.E Computer Science and Engineering", "M.E VLSI Design", "Diploma Automobile", "Diploma Computer Science", "Diploma Electrical and Electronics", "Diploma Electronics and Communication", "Diploma Mechanical"] %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-1.5">
+            <label for="preference1" class="text-sm font-semibold text-gray-700">Preference 1 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-star absolute left-4 top-1/2 -translate-y-1/2 text-primary"></i>
+              <select id="preference1" name="preference1" required class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select First Choice</option>
+                {% for p in prefs %}
+                <option value="{{ p }}" {% if record.Preference1 == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="preference2" class="text-sm font-semibold text-gray-700">Preference 2 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-star-half-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="preference2" name="preference2" required class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Second Choice</option>
+                {% for p in prefs %}
+                <option value="{{ p }}" {% if record.Preference2 == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="preference3" class="text-sm font-semibold text-gray-700">Preference 3 <span class="text-gray-400 font-normal">(Optional)</span></label>
+            <div class="relative">
+              <i class="far fa-star absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="preference3" name="preference3" class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Third Choice</option>
+                {% for p in prefs %}
+                <option value="{{ p }}" {% if record.Preference3 == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-user-tag"></i> Personal Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-1.5">
+            <label for="community" class="text-sm font-semibold text-gray-700">Community <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-users absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="community" name="community" required value="{{ record.Community }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="quota" class="text-sm font-semibold text-gray-700">Quota</label>
+            <div class="relative">
+              <i class="fas fa-briefcase absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="quota" name="quota" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Quota</option>
+                <option value="Government Quota" {% if record.Quota == 'Government Quota' %}selected{% endif %}>Government Quota</option>
+                <option value="Management Quota" {% if record.Quota == 'Management Quota' %}selected{% endif %}>Management Quota</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="gender" class="text-sm font-semibold text-gray-700">Gender <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-venus-mars absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="gender" name="gender" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Gender</option>
+                <option value="Male" {% if record.Gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if record.Gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Other" {% if record.Gender == 'Other' %}selected{% endif %}>Other</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="firstGraduate" class="text-sm font-semibold text-gray-700">First Graduate? <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-user-graduate absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="firstGraduate" name="firstGraduate" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Option</option>
+                <option value="Yes" {% if record.FirstGraduate == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if record.FirstGraduate == 'No' or not record.FirstGraduate %}selected{% endif %}>No</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="admission_mode" class="text-sm font-semibold text-gray-700">Admission Mode</label>
+            <div class="relative">
+              <i class="fas fa-laptop absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="admission_mode" name="admission_mode" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Mode</option>
+                <option value="Online" {% if record.AdmissionMode == 'Online' %}selected{% endif %}>Online</option>
+                <option value="Offline" {% if record.AdmissionMode == 'Offline' %}selected{% endif %}>Offline</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 md:col-span-2">
+            <label class="text-sm font-semibold text-gray-700">Scholarships applied</label>
+            <div class="flex flex-wrap gap-3">
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors has-[:checked]:bg-primary/10 has-[:checked]:border-primary/30 has-[:checked]:text-primary font-medium text-sm text-gray-700">
+                <input type="checkbox" name="scholarship_check" value="PMS" class="accent-primary w-4 h-4" {% if 'PMS' in record.Scholarship %}checked{% endif %}> PMS
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors has-[:checked]:bg-primary/10 has-[:checked]:border-primary/30 has-[:checked]:text-primary font-medium text-sm text-gray-700">
+                <input type="checkbox" name="scholarship_check" value="Sports" class="accent-primary w-4 h-4" {% if 'Sports' in record.Scholarship %}checked{% endif %}> Sports
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors has-[:checked]:bg-primary/10 has-[:checked]:border-primary/30 has-[:checked]:text-primary font-medium text-sm text-gray-700">
+                <input type="checkbox" name="scholarship_check" value="7.5" class="accent-primary w-4 h-4" {% if '7.5' in record.Scholarship %}checked{% endif %}> 7.5 Quota
+              </label>
+              <label class="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors has-[:checked]:bg-primary/10 has-[:checked]:border-primary/30 has-[:checked]:text-primary font-medium text-sm text-gray-700">
+                <input type="checkbox" name="scholarship_check" value="Others" class="accent-primary w-4 h-4" {% if 'Others' in record.Scholarship %}checked{% endif %}> Others
+              </label>
+            </div>
+            <input type="hidden" name="scholarship" id="scholarship_hidden" value="{{ record.Scholarship }}">
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-phone-alt"></i> Contact Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-1.5">
+            <label for="phone" class="text-sm font-semibold text-gray-700">Student Mobile No <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-mobile-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="tel" id="phone" name="phone" required maxlength="10" pattern="\d{10}" value="{{ record.Phone }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="father_name" class="text-sm font-semibold text-gray-700">Father Name <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-user-friends absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="father_name" name="father_name" required value="{{ record.FatherName }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="father_mobile" class="text-sm font-semibold text-gray-700">Father Mobile No</label>
+            <div class="relative">
+              <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="tel" id="father_mobile" name="father_mobile" maxlength="10" value="{{ record.FatherMobile }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="mother_name" class="text-sm font-semibold text-gray-700">Mother Name <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-user-friends absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="mother_name" name="mother_name" required value="{{ record.MotherName }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="mother_mobile" class="text-sm font-semibold text-gray-700">Mother Mobile No</label>
+            <div class="relative">
+              <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="tel" id="mother_mobile" name="mother_mobile" maxlength="10" value="{{ record.MotherMobile }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5 md:col-span-2">
+            <label for="aadhar" class="text-sm font-semibold text-gray-700">Aadhar Number</label>
+            <div class="relative">
+              <i class="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="aadhar" name="aadhar" maxlength="12" pattern="\d{12}" value="{{ record.Aadhar }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium tracking-widest">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-map-marked-alt"></i> Address Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-1.5 md:col-span-2">
+            <label for="address" class="text-sm font-semibold text-gray-700">Full Address</label>
+            <div class="relative">
+              <i class="fas fa-home absolute left-4 top-[18px] text-gray-400"></i>
+              <textarea id="address" name="address" rows="3" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium resize-none">{{ record.Address }}</textarea>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="district" class="text-sm font-semibold text-gray-700">District</label>
+            <div class="relative">
+              <i class="fas fa-map-pin absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="district" name="district" value="{{ record.District }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="state" class="text-sm font-semibold text-gray-700">State <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-map absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="state" name="state" required value="{{ record.State }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="reference" class="text-sm font-semibold text-gray-700">Reference Code <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="reference" name="reference" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select Code</option>
+                {% for n in ['098','099','100','101','102','103','104','105','106','107','108','109','110','111','112','113','114','116','117','118','120','122','123','124','125','126','127','128','129','130','132','133','134','135','136','137','138','139','140','141','144','145','146','149','151','152','155','156','157','158','159','160','162','163','164','166','167','168','170','171','172','175'] %}
+                <option value="SSEC{{ n }}" {% if record.Reference == 'SSEC' ~ n %}selected{% endif %}>SSEC{{ n }}</option>
+                {% endfor %}
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="staffName" class="text-sm font-semibold text-gray-700">Staff Name</label>
+            <div class="relative">
+              <i class="fas fa-user-tie absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" id="staffName" name="staffName" value="{{ record.StaffName }}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sticky bottom-0 left-0 right-0 md:relative bg-white/90 backdrop-blur-md p-4 md:p-6 border-t border-gray-100 flex justify-end z-20">
+        <button type="button" id="nextBtn" class="w-full md:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-floating flex items-center justify-center gap-2 active:scale-95" onclick="goStep(2)">
+          Continue to Payment <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Payment Details -->
+    <div class="step-section hidden" id="step2">
+      <div class="p-5 md:p-8">
+        <div class="mb-8 pb-4 border-b border-gray-50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-lg"><i class="fas fa-credit-card"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Payment Details</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Please provide fee details</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-1.5 md:col-span-2">
+            <label for="payment_status" class="text-sm font-semibold text-gray-700">Payment Status <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i class="fas fa-check-circle absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <select id="payment_status" name="payment_status" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+                <option value="">Select status</option>
+                <option value="Paid" {% if record.PaymentStatus == 'Paid' %}selected{% endif %}>Paid</option>
+                <option value="Unpaid" {% if record.PaymentStatus == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="initial_amount" class="text-sm font-semibold text-gray-700">Initial Amount (₹)</label>
+            <div class="relative">
+              <i class="fas fa-rupee-sign absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="number" id="initial_amount" name="initial_amount" value="{{ record['Initial Amount'] }}" min="0" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="Tuition_fee" class="text-sm font-semibold text-gray-700">Tuition Fee (₹)</label>
+            <div class="relative">
+              <i class="fas fa-rupee-sign absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="number" id="Tuition_fee" name="Tuition_fee" value="{{ record['Tuition Fee'] }}" min="0" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky bottom-0 left-0 right-0 md:relative bg-white/90 backdrop-blur-md p-4 md:p-6 border-t border-gray-100 flex flex-col md:flex-row justify-between gap-3 md:gap-0 z-20">
+        <button type="button" class="w-full md:w-auto px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 active:scale-95 order-2 md:order-1" onclick="goStep(1)">
+          <i class="fas fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="w-full md:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-floating flex items-center justify-center gap-2 active:scale-95 order-1 md:order-2" onclick="goStep(3)">
+          Next Step <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Cutoff Calculation -->
+    <div class="step-section hidden" id="step3">
+      <div class="p-5 md:p-8">
+        <div class="mb-8 pb-4 border-b border-gray-50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-lg"><i class="fas fa-calculator"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Cutoff Calculation</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Based on Higher Secondary Marks</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-1.5">
+            <label for="physics" class="text-sm font-semibold text-gray-700">Physics Mark</label>
+            <div class="relative">
+              <i class="fas fa-atom absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="number" id="physics" name="physics" value="{{ record.Physics }}" min="0" max="100" oninput="calculateCutoff(); validateMark(this)" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="chemistry" class="text-sm font-semibold text-gray-700">Chemistry Mark</label>
+            <div class="relative">
+              <i class="fas fa-flask absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="number" id="chemistry" name="chemistry" value="{{ record.Chemistry }}" min="0" max="100" oninput="calculateCutoff(); validateMark(this)" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="maths" class="text-sm font-semibold text-gray-700">Maths Mark</label>
+            <div class="relative">
+              <i class="fas fa-square-root-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="number" id="maths" name="maths" value="{{ record.Maths }}" min="0" max="100" oninput="calculateCutoff(); validateMark(this)" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium">
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="cutoff" class="text-sm font-semibold text-gray-700">Calculated Cutoff</label>
+            <div class="relative">
+              <i class="fas fa-percent absolute left-4 top-1/2 -translate-y-1/2 text-primary"></i>
+              <input type="number" id="cutoff" name="cutoff" value="{{ record.Cutoff }}" step="0.01" readonly class="w-full pl-11 pr-4 py-3 bg-primary/5 border border-primary/20 rounded-xl text-primary outline-none transition-all text-lg font-bold">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky bottom-0 left-0 right-0 md:relative bg-white/90 backdrop-blur-md p-4 md:p-6 border-t border-gray-100 flex flex-col md:flex-row justify-between gap-3 md:gap-0 z-20">
+        <button type="button" class="w-full md:w-auto px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 active:scale-95 order-2 md:order-1" onclick="goStep(2)">
+          <i class="fas fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="w-full md:w-auto px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-floating flex items-center justify-center gap-2 active:scale-95 order-1 md:order-2" onclick="goStep(4)">
+          Next Step <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Certificates -->
+    <div class="step-section hidden" id="step4">
+      <div class="p-5 md:p-8">
+        <div class="mb-8 pb-4 border-b border-gray-50 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-lg"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Certificate Status</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Verify availability of the following documents</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% set certs = [
+            ('Certificate10th', '10th Mark Sheet'),
+            ('Certificate11th', '11th Mark Sheet'),
+            ('Certificate12th', '12th Mark Sheet'),
+            ('TransferCertificate', 'Transfer Certificate'),
+            ('CommunityCertificate', 'Community Certificate'),
+            ('IncomeCertificate', 'Income Certificate'),
+            ('NativityCertificate', 'Nativity Certificate'),
+            ('AadharXerox', 'Aadhar Xerox'),
+            ('BankPassbook', 'Bank Passbook'),
+            ('StudentPhoto', 'Student Photo')
+          ] %}
+          
+          {% for key, label in certs %}
+          <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl hover:border-primary/40 transition-colors">
+            <span class="text-sm font-semibold text-gray-800">{{ label }}</span>
+            <div class="flex bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+              <label class="cursor-pointer">
+                <input type="radio" name="{{ key[0]|lower + key[1:] }}" value="Yes" class="peer sr-only" {% if record[key] == 'Yes' %}checked{% endif %}>
+                <div class="px-4 py-1.5 text-xs font-bold text-gray-500 peer-checked:bg-emerald-500 peer-checked:text-white transition-colors">Yes</div>
+              </label>
+              <div class="w-[1px] bg-gray-200"></div>
+              <label class="cursor-pointer">
+                <input type="radio" name="{{ key[0]|lower + key[1:] }}" value="No" class="peer sr-only" {% if record[key] != 'Yes' %}checked{% endif %}>
+                <div class="px-4 py-1.5 text-xs font-bold text-gray-500 peer-checked:bg-red-500 peer-checked:text-white transition-colors">No</div>
+              </label>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="sticky bottom-0 left-0 right-0 md:relative bg-white/90 backdrop-blur-md p-4 md:p-6 border-t border-gray-100 flex flex-col md:flex-row justify-between gap-3 md:gap-0 z-20">
+        <button type="button" class="w-full md:w-auto px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 active:scale-95 order-2 md:order-1" onclick="goStep(3)">
+          <i class="fas fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="w-full md:w-auto px-8 py-3.5 border-2 border-emerald-500 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-[0_10px_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2 active:scale-95 order-1 md:order-2" onclick="submitForm()">
+          <i class="fas fa-save"></i> Update App
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Success Modal Overlay -->
+<div id="successModal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center px-4 opacity-0 transition-opacity duration-300">
+  <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300 text-center modal-content border border-gray-100">
+    <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5 text-emerald-500 text-4xl shadow-[0_0_0_10px_rgba(16,185,129,0.1)]">
+      <i class="fas fa-check"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Record Updated!</h2>
+    <p class="text-gray-500 mb-6 text-sm">The applicant details have been updated successfully.</p>
+    
+    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">App Number</p>
+      <div class="text-2xl font-black text-primary tracking-widest" id="appNumberDisplay">{{ record.ApplicationNumber }}</div>
+    </div>
+    
+    <a href="{{ url_for('existing_applicant') }}" class="block w-full py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-colors">
+      Back to Applicants
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let current = 1;
+    const totalSteps = 4;
+
+    function validateMark(input) {
+        if (input.value !== "") {
+            let val = parseFloat(input.value);
+            if (val > 100) input.value = 100;
+            if (val < 0) input.value = 0;
+        }
+    }
+
+    function calculateCutoff() {
+        const physics = parseFloat(document.getElementById('physics').value) || 0;
+        const chemistry = parseFloat(document.getElementById('chemistry').value) || 0;
+        const maths = parseFloat(document.getElementById('maths').value) || 0;
+        const cutoff = (physics / 2) + (chemistry / 2) + maths;
+        document.getElementById('cutoff').value = cutoff.toFixed(2);
+    }
+
+    function updateScholarship() {
+        const checks = document.querySelectorAll('input[name="scholarship_check"]:checked');
+        const values = Array.from(checks).map(c => c.value);
+        document.getElementById('scholarship_hidden').value = values.join(', ');
+    }
+
+    function checkDuplicatePrefs() {
+        const selects = document.querySelectorAll('.pref-select');
+        const values = [];
+        let duplicate = false;
+
+        selects.forEach(s => {
+            if (s.value && values.includes(s.value)) {
+                duplicate = true;
+                s.parentElement.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+            } else {
+                if (s.value) values.push(s.value);
+                s.parentElement.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+            }
+        });
+        return duplicate;
+    }
+
+    document.getElementById('phone')?.addEventListener('input', e => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    });
+    document.getElementById('aadhar')?.addEventListener('input', e => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12);
+    });
+
+    async function goStep(n) {
+        if (n > current) {
+            const currentSection = document.getElementById('step' + current);
+            const inputs = currentSection.querySelectorAll('input:not([type="radio"]), select, textarea');
+            let allValid = true;
+
+            for (const inp of inputs) {
+                if (inp.required && !inp.value.trim()) {
+                    inp.reportValidity();
+                    allValid = false;
+                    break;
+                }
+                if (inp.id === 'phone' && inp.value.length !== 10) {
+                    window.showToast('Phone number must be exactly 10 digits.', true);
+                    inp.focus();
+                    allValid = false;
+                    break;
+                }
+                if (inp.id === 'aadhar' && inp.value.length !== 0 && inp.value.length !== 12) {
+                    window.showToast('Aadhar number must be exactly 12 digits if provided.', true);
+                    inp.focus();
+                    allValid = false;
+                    break;
+                }
+            }
+            if (!allValid) return;
+
+            if (current === 1 && checkDuplicatePrefs()) {
+                window.showToast('Please select unique options for Preferences.', true);
+                return;
+            }
+        }
+
+        // Stepper Visuals update
+        const progressLine = document.getElementById('progressLine');
+        progressLine.style.width = ((n - 1) / (totalSteps - 1)) * 100 + '%';
+
+        for (let i = 1; i <= totalSteps; i++) {
+            const el = document.getElementById('prog' + i);
+            const indicator = el.querySelector('.step-indicator');
+            const txt = el.querySelector('.step-text');
+            
+            if (i < n) {
+                indicator.className = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-white bg-primary shadow-[0_0_0_4px_white] transition-all step-indicator";
+                indicator.innerHTML = '<i class="fas fa-check"></i>';
+                txt.className = "text-[10px] md:text-xs font-bold mt-3 text-primary uppercase tracking-wider step-text";
+            } else if (i === n) {
+                indicator.className = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-white bg-primary shadow-[0_0_0_4px_white,0_4px_10px_rgba(108,99,255,0.4)] transition-all step-indicator";
+                indicator.innerHTML = i;
+                txt.className = "text-[10px] md:text-xs font-bold mt-3 text-primary uppercase tracking-wider step-text";
+            } else {
+                indicator.className = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-400 bg-white border-2 border-gray-200 shadow-[0_0_0_4px_white] transition-all step-indicator";
+                indicator.innerHTML = i;
+                txt.className = "text-[10px] md:text-xs font-bold mt-3 text-gray-400 uppercase tracking-wider step-text";
+            }
+        }
+
+        // Hide old section, show new section
+        document.querySelectorAll('.step-section').forEach(s => {
+            s.classList.remove('block');
+            s.classList.add('hidden');
+        });
+        document.getElementById('step' + n).classList.remove('hidden');
+        document.getElementById('step' + n).classList.add('block', 'animate-[fadeIn_0.3s_ease-out]');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        current = n;
+    }
+
+    async function submitForm() {
+        const btn = document.querySelector('button[onclick="submitForm()"]');
+        if (btn.disabled) return;
+
+        updateScholarship();
+        const form = document.getElementById('applicantForm');
+        const fd = new FormData(form);
+
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        try {
+            const res = await fetch('{{ url_for("edit_applicant", app_number=record.ApplicationNumber) }}', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success) {
+                const modal = document.getElementById('successModal');
+                modal.classList.remove('hidden');
+                setTimeout(()=> {
+                   modal.classList.remove('opacity-0');
+                   modal.querySelector('.modal-content').classList.remove('scale-95');
+                }, 10);
+            } else {
+                window.showToast(data.message || 'Unknown error', true);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        } catch (err) {
+            window.showToast('Update failed. Please try again.', true);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    // Initialize cutoff and scholarships on load
+    document.addEventListener('DOMContentLoaded', () => {
+        // We don't recalculate cutoff automatically right away, though we could
+        updateScholarship();
+    });
+</script>
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

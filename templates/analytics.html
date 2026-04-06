@@ -1,0 +1,238 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Admission Analytics – Admission Portal{% endblock %}
+
+{% block content %}
+<div class="px-5 py-6 md:p-8">
+  <!-- Top Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 mt-4 md:mt-0">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Admission Analytics <span class="inline-block hover:animate-spin">📊</span></h1>
+      <p class="text-gray-500 font-medium text-sm">Real-time data insights and reports</p>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row gap-3">
+      <!-- Date Filter -->
+      <form method="POST" action="{{ url_for('analytics') }}" id="filterForm">
+        <div class="relative">
+          <i class="fas fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-primary"></i>
+          <input type="date" id="query_date" name="query_date" value="{{ selected_date or '' }}" onchange="this.form.submit()" 
+                 title="Filter by Date (Clear for Full Data)"
+                 class="w-full sm:w-auto pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm text-sm font-bold text-gray-700 cursor-pointer appearance-none">
+        </div>
+      </form>
+
+      <!-- Export Dropdown -->
+      <div class="relative group">
+        <button id="exportDropdownBtn" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors shadow-[0_4px_15px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2">
+          <i class="fas fa-file-excel"></i> Export <i class="fas fa-chevron-down text-[10px] ml-1"></i>
+        </button>
+        <div class="absolute right-0 top-[110%] w-48 bg-white rounded-xl shadow-floating border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right z-50">
+          <a href="#" id="exportDateWise" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors disabled-link">
+            <i class="fas fa-calendar-day w-4 text-center"></i> Date-wise Report
+          </a>
+          <a href="{{ url_for('export_all') }}" id="exportAll" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+            <i class="fas fa-database w-4 text-center"></i> Full Database
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+    
+    <!-- Total Applications Highlight -->
+    <div class="bg-gradient-to-br from-primary to-primary-light rounded-[24px] p-6 shadow-floating text-white flex items-center gap-5 relative overflow-hidden group">
+      <div class="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
+      <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl relative z-10 shrink-0">
+        <i class="fas fa-users relative z-10"></i>
+      </div>
+      <div class="relative z-10">
+        <p class="text-sm font-bold text-white/80 tracking-wide uppercase mb-1">Total Applications</p>
+        <div class="flex items-end gap-3">
+          <h3 class="text-4xl font-black" id="countTotal">0</h3>
+          <span class="px-2.5 py-1 rounded-lg bg-white/20 text-[10px] font-bold mb-1 backdrop-blur-sm" id="dateBadge">Full Data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- UG Regular -->
+    <div class="bg-white rounded-[24px] p-6 border border-gray-100 shadow-soft flex flex-col justify-center gap-2 group hover:-translate-y-1 transition-transform cursor-default">
+      <div class="flex justify-between items-start mb-2">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+          <i class="fas fa-user-graduate"></i>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">UG Regular</p>
+        </div>
+      </div>
+      <h3 class="text-3xl font-black text-gray-900" id="countUG_Regular">0</h3>
+    </div>
+
+    <!-- UG Lateral -->
+    <div class="bg-white rounded-[24px] p-6 border border-gray-100 shadow-soft flex flex-col justify-center gap-2 group hover:-translate-y-1 transition-transform cursor-default">
+      <div class="flex justify-between items-start mb-2">
+        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">UG Lateral</p>
+        </div>
+      </div>
+      <h3 class="text-3xl font-black text-gray-900" id="countUG_Lateral">0</h3>
+    </div>
+
+    <!-- PG Total -->
+    <div class="bg-white rounded-[24px] p-6 border border-gray-100 shadow-soft flex flex-col justify-center gap-2 group hover:-translate-y-1 transition-transform cursor-default">
+      <div class="flex justify-between items-start mb-2">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+          <i class="fas fa-book"></i>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">PG Total</p>
+        </div>
+      </div>
+      <h3 class="text-3xl font-black text-gray-900" id="countPG">0</h3>
+    </div>
+
+    <!-- Diploma Regular -->
+    <div class="bg-white rounded-[24px] p-6 border border-gray-100 shadow-soft flex flex-col justify-center gap-2 group hover:-translate-y-1 transition-transform cursor-default">
+      <div class="flex justify-between items-start mb-2">
+        <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Diploma Regular</p>
+        </div>
+      </div>
+      <h3 class="text-3xl font-black text-gray-900" id="countDiploma_Regular">0</h3>
+    </div>
+
+    <!-- Diploma Lateral -->
+    <div class="bg-white rounded-[24px] p-6 border border-gray-100 shadow-soft flex flex-col justify-center gap-2 group hover:-translate-y-1 transition-transform cursor-default">
+      <div class="flex justify-between items-start mb-2">
+        <div class="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-xl shrink-0 group-hover:bg-red-500 group-hover:text-white transition-colors">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Diploma Lateral</p>
+        </div>
+      </div>
+      <h3 class="text-3xl font-black text-gray-900" id="countDiploma_Lateral">0</h3>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .disabled-link {
+      opacity: 0.5;
+      pointer-events: none;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0; /* use standard calendar icon from font-awesome instead by overlaying */
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+  }
+</style>
+<script>
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if(!obj) return;
+        if (start === end) {
+            obj.innerText = end;
+            return;
+        }
+        const range = end - start;
+        let current = start;
+        const increment = end > start ? 1 : -1;
+        const stepTime = Math.max(Math.abs(Math.floor(duration / range)), 1);
+        
+        const timer = setInterval(() => {
+            current += increment;
+            obj.innerText = current;
+            if (current == end) {
+                clearInterval(timer);
+            }
+        }, stepTime);
+    }
+
+    async function loadAnalytics() {
+        try {
+            const queryDate = document.getElementById('query_date').value;
+            const badge = document.getElementById('dateBadge');
+            
+            if (queryDate) {
+                badge.innerText = "Date: " + queryDate;
+            } else {
+                badge.innerText = "Full Data";
+            }
+
+            const res = await fetch(`/api/analytics-details?date=${queryDate}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                const c = data.counts;
+                animateValue('countTotal', 0, c.total, 800);
+                animateValue('countUG_Regular', 0, c.ug_regular, 800);
+                animateValue('countUG_Lateral', 0, c.ug_lateral, 800);
+                animateValue('countPG', 0, c.pg_total, 800);
+                animateValue('countDiploma_Regular', 0, c.diploma_regular, 800);
+                animateValue('countDiploma_Lateral', 0, c.diploma_lateral, 800);
+            }
+        } catch (err) {
+            console.error('Failed to load analytics counts:', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAnalytics();
+
+        // Handle Export Logic
+        const queryDateInput = document.getElementById('query_date');
+        const exportDateWise = document.getElementById('exportDateWise');
+        const exportAll = document.getElementById('exportAll');
+        const exportDropdownBtn = document.getElementById('exportDropdownBtn');
+
+        function updateExportLinks() {
+            const date = queryDateInput.value;
+            if (date) {
+                exportDateWise.href = `/export-date-wise?date=${date}`;
+                exportDateWise.classList.remove('disabled-link');
+            } else {
+                exportDateWise.href = '#';
+                exportDateWise.classList.add('disabled-link');
+            }
+        }
+
+        updateExportLinks();
+        queryDateInput.addEventListener('change', updateExportLinks);
+
+        // Loading indicator for downloads
+        [exportDateWise, exportAll].forEach(item => {
+            if(!item) return;
+            item.addEventListener('click', function(e) {
+                if (this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                    return;
+                }
+                
+                const originalText = exportDropdownBtn.innerHTML;
+                exportDropdownBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+                exportDropdownBtn.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    exportDropdownBtn.innerHTML = originalText;
+                    exportDropdownBtn.style.pointerEvents = 'all';
+                }, 3000); // Reset after 3 seconds
+            });
+        });
+    });
+</script>
+{% endblock %}

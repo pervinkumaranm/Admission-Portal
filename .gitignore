@@ -1,0 +1,17 @@
+# Environments
+venv/
+env/
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Sensitive files
+credentials.json
+*.pem
+
+# IDEs / OS files
+.vscode/
+.idea/
+.DS_Store
