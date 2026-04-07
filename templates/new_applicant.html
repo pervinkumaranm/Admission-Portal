@@ -140,10 +140,10 @@
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="preference2" class="text-sm font-semibold text-gray-700">Preference 2 <span class="text-red-500">*</span></label>
+            <label for="preference2" class="text-sm font-semibold text-gray-700">Preference 2</label>
             <div class="relative">
               <i class="fas fa-star-half-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-              <select id="preference2" name="preference2" required class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+              <select id="preference2" name="preference2" class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
                 <option value="">Select Second Choice</option>
                 {% for p in prefs %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
               </select>
@@ -464,7 +464,7 @@
             ('10th Mark Sheet', 'certificate10th', 'Yes'),
             ('11th Mark Sheet', 'certificate11th', 'No'),
             ('12th Mark Sheet', 'certificate12th', 'Yes'),
-            ('Transfer Certificate', 'transferCertificate', 'Yes'),
+            ('Transfer Certificate', 'transferCertificate', 'No'),
             ('Community Certificate', 'communityCertificate', 'No'),
             ('Income Certificate', 'incomeCertificate', 'No'),
             ('Nativity Certificate', 'nativityCertificate', 'No'),
@@ -472,7 +472,7 @@
             ('Bank Passbook', 'bankPassbook', 'No'),
             ('Student Photo', 'studentPhoto', 'No')
           ] %}
-          
+
           {% for label, name, default in certs %}
           <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl hover:border-primary/40 transition-colors">
             <span class="text-sm font-semibold text-gray-800">{{ label }}</span>

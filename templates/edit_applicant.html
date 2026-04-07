@@ -104,8 +104,8 @@
               <i class="fas fa-sliders-h absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
               <select id="regulation" name="regulation" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
                 <option value="">Select Option</option>
-                <option value="Regular" {% if record.Regulation == 'Regular' %}selected{% endif %}>Regular</option>
-                <option value="Lateral" {% if record.Regulation == 'Lateral' %}selected{% endif %}>Lateral</option>
+                <option value="Regular" {% if record['Regular / Lateral'] == 'Regular' %}selected{% endif %}>Regular</option>
+                <option value="Lateral" {% if record['Regular / Lateral'] == 'Lateral' %}selected{% endif %}>Lateral</option>
               </select>
               <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
             </div>
@@ -120,7 +120,7 @@
         </div>
 
         <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-list-ol"></i> Academic Preferences</h3>
-        {% set prefs = ["B.E Computer Science and Engineering", "B.E Civil Engineering", "B.E Cyber Security", "B.E Electronics and Communication Engineering", "B.E Electrical and Electronics Engineering", "B.E Mechanical Engineering", "B.E Mechatronics Engineering", "B.Tech Information Technology", "B.Tech Artificial Intelligence and Data Science", "B.E Artificial Intelligence and Machine Learning", "M.E Computer Science and Engineering", "M.E VLSI Design", "Diploma Automobile", "Diploma Computer Science", "Diploma Electrical and Electronics", "Diploma Electronics and Communication", "Diploma Mechanical"] %}
+        {% set prefs = ["B.E Computer Science and Engineering", "B.E Civil Engineering", "B.E Cyber Security", "B.E Electronics and Communication  Engineering", "B.E Electrical and Electronics Engineering", "B.E Mechanical Engineering", "B.E Mechatronics Engineering", "B.Tech Information Technology", "B.Tech Artifical Intelligence and Data Science", "B.E B.Tech Artifical Intelligence and Machine Learning", "M.E Computer Science and Engineering", "M.E VLSI Design", "Diploma Automobile", "Diploma Computer Science", "Diploma Electrical and Electronics", "Diploma Electronics and Communication", "Diploma Mechanical"] %}
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           <div class="flex flex-col gap-1.5">
@@ -137,10 +137,10 @@
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="preference2" class="text-sm font-semibold text-gray-700">Preference 2 <span class="text-red-500">*</span></label>
+            <label for="preference2" class="text-sm font-semibold text-gray-700">Preference 2</label>
             <div class="relative">
               <i class="fas fa-star-half-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-              <select id="preference2" name="preference2" required class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
+              <select id="preference2" name="preference2" class="pref-select w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
                 <option value="">Select Second Choice</option>
                 {% for p in prefs %}
                 <option value="{{ p }}" {% if record.Preference2 == p %}selected{% endif %}>{{ p }}</option>
@@ -317,7 +317,7 @@
               <i class="fas fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
               <select id="reference" name="reference" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium appearance-none">
                 <option value="">Select Code</option>
-                {% for n in ['098','099','100','101','102','103','104','105','106','107','108','109','110','111','112','113','114','116','117','118','120','122','123','124','125','126','127','128','129','130','132','133','134','135','136','137','138','139','140','141','144','145','146','149','151','152','155','156','157','158','159','160','162','163','164','166','167','168','170','171','172','175'] %}
+                {% for n in ['098','099','100','101','102','103','104','105','106','107','108','109','110','111','112','113','114','115','116','117','118','120','122','123','124','125','126','127','128','129','130','132','133','134','135','136','137','138','139','140','141','144','145','146','149','151','152','155','156','157','158','159','160','162','163','164','166','167','168','170','171','172','175'] %}
                 <option value="SSEC{{ n }}" {% if record.Reference == 'SSEC' ~ n %}selected{% endif %}>SSEC{{ n }}</option>
                 {% endfor %}
               </select>
@@ -469,7 +469,7 @@
             ('BankPassbook', 'Bank Passbook'),
             ('StudentPhoto', 'Student Photo')
           ] %}
-          
+
           {% for key, label in certs %}
           <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl hover:border-primary/40 transition-colors">
             <span class="text-sm font-semibold text-gray-800">{{ label }}</span>
