@@ -15,3 +15,7 @@ credentials.json
 .vscode/
 .idea/
 .DS_Store
+
+# Logs and Data
+app.log
+data/

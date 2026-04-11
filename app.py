@@ -11,12 +11,31 @@ import pandas as pd
 import io
 import time
 import random
+import logging
+import sqlite3
+import json
 
+# ---------- configuration & logging ----------
 app = Flask(__name__)
 app.secret_key = 'admission-portal-secret-key-2026'
 
+# Configure logging
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # ---------- constants ----------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, 'admissions.db')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 # On Render, secret files are stored at /etc/secrets/
 # Fall back to local path for development
@@ -24,6 +43,32 @@ CREDENTIALS_FILE = '/etc/secrets/credentials.json' if os.path.exists('/etc/secre
 SHEET_NAME = "SSEC_ADMISSION DATABASE_2026-27"  # User can change this name
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# ---------- SQLite Database Setup ----------
+def init_db():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        # We store the entire row as a JSON string for simplicity in the fallback, 
+        # or we can create columns. Let's create columns to match COLUMNS constant.
+        columns_sql = ", ".join([f'"{col}" TEXT' for col in COLUMNS])
+        cursor.execute(f'''
+            CREATE TABLE IF NOT EXISTS admissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                {columns_sql},
+                synced INTEGER DEFAULT 0,
+                last_error TEXT
+            )
+        ''')
+        # Ensure ApplicationNumber has an index for fast lookups
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_app_num ON admissions (ApplicationNumber)')
+        conn.commit()
+        conn.close()
+        logger.info("SQLite database initialized successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize SQLite: {e}")
+
+init_db()
 
 # ---------- Google Sheets Client Setup ----------
 COLUMNS = [
@@ -93,18 +138,113 @@ def get_worksheet():
             return _cached_sheet
             
         except Exception as e:
-            # If it's a transient network/DNS error, we retry
-            # (In Python/requests/urllib3, this often manifests as MaxRetriesExceeded or NameResolutionError)
-            print(f"Attempt {attempt + 1}/{max_retries} failed to initialize Google Sheets: {e}")
-            
+            logger.error(f"Attempt {attempt + 1}/{max_retries} failed to initialize Google Sheets: {e}")
             if attempt < max_retries - 1:
-                # Exponential backoff with jitter
                 sleep_time = retry_delay * (2 ** attempt) + (random.randint(0, 1000) / 1000)
-                print(f"Retrying in {sleep_time:.2f} seconds...")
+                logger.info(f"Retrying in {sleep_time:.2f} seconds...")
                 time.sleep(sleep_time)
             else:
-                print("All connection attempts failed.")
+                logger.error("All connection attempts failed.")
                 raise e
+
+# ---------- Local Storage & Sync Helpers ----------
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def save_locally(row_data):
+    """Saves a single record to SQLite."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Build SQL
+        cols_str = ", ".join([f'"{col}"' for col in COLUMNS])
+        placeholders = ", ".join(["?" for _ in COLUMNS])
+        
+        # Check if record exists
+        app_num = row_data[0]
+        cursor.execute('SELECT id FROM admissions WHERE ApplicationNumber = ?', (app_num,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing record
+            set_clause = ", ".join([f'"{col}" = ?' for col in COLUMNS])
+            cursor.execute(f'UPDATE admissions SET {set_clause}, synced = 0 WHERE ApplicationNumber = ?', (*row_data, app_num))
+            logger.info(f"Updated record locally: {app_num}")
+        else:
+            # Insert new record
+            cursor.execute(f'INSERT INTO admissions ({cols_str}, synced) VALUES ({placeholders}, 0)', (*row_data,))
+            logger.info(f"Saved new record locally: {app_num}")
+            
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Local save failed for {row_data[0]}: {e}")
+        return False
+
+def sync_to_sheets(app_number, row_data, is_new=True):
+    """Attempts to sync a single record to Google Sheets."""
+    try:
+        sheet = get_worksheet()
+        if is_new:
+            sheet.append_row(row_data)
+        else:
+            # For edits, find and update
+            cell = sheet.find(app_number)
+            if cell:
+                row_idx = cell.row
+                update_range = f'A{row_idx}:{get_col_letter(len(COLUMNS))}{row_idx}'
+                sheet.update(range_name=update_range, values=[row_data])
+            else:
+                # If not found in sheet, append it instead
+                sheet.append_row(row_data)
+        
+        # Mark as synced in SQLite
+        conn = get_db_connection()
+        conn.execute('UPDATE admissions SET synced = 1, last_error = NULL WHERE ApplicationNumber = ?', (app_number,))
+        conn.commit()
+        conn.close()
+        logger.info(f"Successfully synced {app_number} to Google Sheets.")
+        return True
+    except Exception as e:
+        logger.error(f"Sync failed for {app_number}: {e}")
+        conn = get_db_connection()
+        conn.execute('UPDATE admissions SET last_error = ? WHERE ApplicationNumber = ?', (str(e), app_number))
+        conn.commit()
+        conn.close()
+        return False
+
+def sync_all_pending():
+    """Retries syncing all unsynced records."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM admissions WHERE synced = 0')
+        pending = cursor.fetchall()
+        conn.close()
+        
+        if not pending:
+            return 0
+            
+        logger.info(f"Found {len(pending)} pending records to sync.")
+        count = 0
+        for row in pending:
+            # Reconstruct row data from sqlite Row
+            row_data = [row[col] for col in COLUMNS]
+            # Since we don't strictly know if it was an edit or new, 
+            # we check if it exists in the sheet first in sync_to_sheets (handled there)
+            if sync_to_sheets(row['ApplicationNumber'], row_data, is_new=False):
+                count += 1
+                # Small sleep to avoid rate limiting
+                time.sleep(1)
+        return count
+    except Exception as e:
+        logger.error(f"Error in sync_all_pending: {e}")
+        return 0
 
 # ===================== ROUTES =====================
 
@@ -226,14 +366,25 @@ def new_applicant():
                 now
             ]
 
-            sheet = get_worksheet()
-            print(f"DEBUG: Processing submission for {app_number} - {request.form.get('name')}")
-            sheet.append_row(row_data)
-            print(f"DEBUG: Successfully appended row for {app_number}")
+            logger.info(f"DEBUG: Processing submission for {app_number} - {request.form.get('name')}")
+            
+            # 1. Save locally FIRST (Critical for reliability)
+            local_success = save_locally(row_data)
+            
+            # 2. Attempt Sync to Google Sheets
+            sync_success = sync_to_sheets(app_number, row_data, is_new=True)
+            
+            if not local_success and not sync_success:
+                logger.error(f"FATAL: Could not save data locally OR to Google Sheets for {app_number}")
+                return jsonify({'success': False, 'message': 'Critical system error: Could not save data.'}), 500
 
-            return jsonify({'success': True, 'application_number': app_number})
+            return jsonify({
+                'success': True, 
+                'application_number': app_number,
+                'sync_status': 'success' if sync_success else 'pending'
+            })
         except Exception as e:
-            print(f"ERROR in new_applicant POST: {e}")
+            logger.error(f"ERROR in new_applicant POST: {e}")
             return jsonify({'success': False, 'message': str(e)}), 500
 
     return render_template('new_applicant.html')
@@ -301,12 +452,19 @@ def edit_applicant(app_number):
                     updated_values.append(val)
 
             # Update the range
-            update_range = f'A{row_idx}:{get_col_letter(len(COLUMNS))}{row_idx}'
-            sheet.update(range_name=update_range, values=[updated_values])
+            # 1. Save locally FIRST
+            local_success = save_locally(updated_values)
             
-            return jsonify({'success': True, 'application_number': app_number})
+            # 2. Attempt Sync
+            sync_success = sync_to_sheets(app_number, updated_values, is_new=False)
+            
+            return jsonify({
+                'success': True, 
+                'application_number': app_number,
+                'sync_status': 'success' if sync_success else 'pending'
+            })
         except Exception as e:
-            print(f"ERROR in edit_applicant POST: {e}")
+            logger.error(f"ERROR in edit_applicant POST: {e}")
             return jsonify({'success': False, 'message': str(e)}), 500
 
     # GET: Fetch record
@@ -319,9 +477,30 @@ def edit_applicant(app_number):
         
         return render_template('edit_applicant.html', record=record)
     except Exception as e:
-        print(f"ERROR in edit_applicant GET: {e}")
+        logger.error(f"ERROR in edit_applicant GET: {e}")
         flash("Error loading applicant data.")
         return redirect(url_for('existing_applicant'))
+
+@app.route('/admin/sync', methods=['GET', 'POST'])
+def admin_sync():
+    """Manual sync trigger for administrators."""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        synced_count = sync_all_pending()
+        flash(f"Sync complete. {synced_count} records pushed to Google Sheets.", "success")
+        return redirect(url_for('admin_sync'))
+        
+    # Get pending count
+    try:
+        conn = get_db_connection()
+        pending = conn.execute('SELECT COUNT(*) as count FROM admissions WHERE synced = 0').fetchone()['count']
+        conn.close()
+    except:
+        pending = 0
+        
+    return render_template('sync_status.html', pending_count=pending)
 
 @app.route('/existing-applicant')
 def existing_applicant():
