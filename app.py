@@ -68,8 +68,6 @@ def init_db():
     except Exception as e:
         logger.error(f"Failed to initialize SQLite: {e}")
 
-init_db()
-
 # ---------- Google Sheets Client Setup ----------
 COLUMNS = [
     'ApplicationNumber', 'AdmissionDate', 'HostelDayscholar', 'Name', 'Degree', 
@@ -85,6 +83,8 @@ COLUMNS = [
     'BankPassbook', 'StudentPhoto',
     'CreatedAt', 'UpdatedAt'
 ]
+
+init_db()
 
 # ---------- Google Sheets Client Setup ----------
 _cached_sheet = None
@@ -316,6 +316,35 @@ def new_applicant():
         try:
             app_number = 'APP-' + uuid.uuid4().hex[:8].upper()
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            # --- Duplicate Prevention Logic ---
+            name = request.form.get('name', '').strip()
+            dob = request.form.get('dob', '').strip()
+            phone = request.form.get('phone', '').strip()
+            
+            # Check SQLite for recent submission with same Name/DOB/Phone
+            # (within last 2 minutes)
+            try:
+                conn = get_db_connection()
+                # Use CreatedAt for time check
+                two_mins_ago = (datetime.now() - timedelta(minutes=2)).strftime('%Y-%m-%d %H:%M:%S')
+                dup = conn.execute('''
+                    SELECT ApplicationNumber FROM admissions 
+                    WHERE Name = ? AND DOB = ? AND Phone = ? 
+                    AND CreatedAt > ?
+                ''', (name, dob, phone, two_mins_ago)).fetchone()
+                conn.close()
+                
+                if dup:
+                    logger.warning(f"Duplicate submission blocked for {name} ({phone}). Existing App: {dup['ApplicationNumber']}")
+                    return jsonify({
+                        'success': False, 
+                        'message': 'Duplicate submission detected. This application was already submitted a moment ago.'
+                    }), 409
+            except Exception as e:
+                logger.error(f"Duplicate check failed: {e}")
+                # We continue even if check fails to avoid blocking legitimate users
+            # ----------------------------------
 
             row_data = [
                 app_number,
