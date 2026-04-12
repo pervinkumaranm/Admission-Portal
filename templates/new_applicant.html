@@ -246,10 +246,10 @@
         <h3 class="flex items-center gap-2 text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-4"><i class="fas fa-phone-alt"></i> Contact Details</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           <div class="flex flex-col gap-1.5">
-            <label for="phone" class="text-sm font-semibold text-gray-700">Student Mobile No </label>
+            <label for="phone" class="text-sm font-semibold text-gray-700">Student Mobile No</label>
             <div class="relative">
               <i class="fas fa-mobile-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-              <input type="tel" id="phone" name="phone" placeholder="10 Digit Number" maxlength="10" pattern="\d{10}" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
+              <input type="tel" id="phone" name="phone" placeholder="10 Digit Number" maxlength="10" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm font-medium">
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
@@ -589,7 +589,7 @@
                     allValid = false;
                     break;
                 }
-                if (inp.id === 'phone' && inp.value.length !== 10) {
+                if (inp.id === 'phone' && inp.value.length > 0 && inp.value.length !== 10) {
                     window.showToast('Phone number must be exactly 10 digits.', true);
                     inp.focus();
                     allValid = false;
@@ -663,6 +663,21 @@
                 method: 'POST',
                 body: fd
             });
+            
+            // Check for non-200 responses
+            if (!res.ok) {
+                const errorText = await res.text();
+                let errorMessage = `Server Error (${res.status})`;
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch(e) {}
+                window.showToast(errorMessage, true);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
             const data = await res.json();
             if (data.success) {
                 document.getElementById('appNumberDisplay').textContent = data.application_number;
@@ -678,7 +693,8 @@
                 btn.innerHTML = originalText;
             }
         } catch (err) {
-             window.showToast('Submission failed. Please try again.', true);
+            console.error('Submission Error:', err);
+            window.showToast(`Network Error: Please check your connection.`, true);
             btn.disabled = false;
             btn.innerHTML = originalText;
         }

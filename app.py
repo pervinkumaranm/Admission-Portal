@@ -19,8 +19,19 @@ import json
 app = Flask(__name__)
 app.secret_key = 'admission-portal-secret-key-2026'
 
+# Detect if running on Render
+IS_RENDER = os.environ.get('RENDER') == 'true'
+
+# Configure paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if IS_RENDER:
+    LOG_FILE = '/tmp/app.log'
+    DATA_DIR = '/tmp/data'
+else:
+    LOG_FILE = os.path.join(BASE_DIR, 'app.log')
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
+
 # Configure logging
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.log')
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -32,8 +43,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ---------- constants ----------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, 'admissions.db')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
@@ -42,7 +51,8 @@ UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 CREDENTIALS_FILE = '/etc/secrets/credentials.json' if os.path.exists('/etc/secrets/credentials.json') else os.path.join(BASE_DIR, 'credentials.json')
 SHEET_NAME = "SSEC_ADMISSION DATABASE_2026-27"  # User can change this name
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+if not IS_RENDER:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ---------- SQLite Database Setup ----------
 def init_db():
@@ -314,7 +324,7 @@ def new_applicant():
 
     if request.method == 'POST':
         try:
-            app_number = 'APP-' + uuid.uuid4().hex[:8].upper()
+            app_number = uuid.uuid4().hex[:5].upper()
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
             # --- Duplicate Prevention Logic ---
